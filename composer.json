@@ -1,0 +1,26 @@
+{
+    "name": "terral/online-production-system",
+    "description": "RESTful PHP backend API for Terral Online Production System",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "firebase/php-jwt": "^6.0",
+        "tecnickcom/tcpdf": "^6.4",
+        "mpdf/mpdf": "^8.0",
+        "phpmailer/phpmailer": "^6.5",
+        "twilio/sdk": "^6.28",
+        "vlucas/phpdotenv": "^5.4",
+        "monolog/monolog": "^2.3"
+    },
+    "authors": [
+        {
+            "name": "Terral Developer",
+            "email": "developer@terral.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Terral\\": "api/"
+        }
+    }
+} 

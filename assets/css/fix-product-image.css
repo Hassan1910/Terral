@@ -1,0 +1,30 @@
+/* Fix for Product Image Display Issues */
+
+/* Make sure product-img-container has proper styling */
+.product-img-container {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    background-color: #3498db;
+    color: transparent !important;
+}
+
+/* Ensure product-img displays correctly */
+.product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: relative;
+    z-index: 1;
+}
+
+/* Hide any text content in the container */
+.product-img-container::after,
+.product-img-container::before {
+    display: none !important;
+}
+
+/* Hide any text in this container */
+.product-img-container > :not(img) {
+    display: none;
+}

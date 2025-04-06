@@ -1,0 +1,157 @@
+<?php
+/**
+ * Product Helper Class
+ * Provides helper methods for product-related operations
+ */
+
+class ProductHelper {
+    private $conn;
+    private $uploads_dir;
+    
+    /**
+     * Constructor
+     * @param PDO $db Database connection
+     */
+    public function __construct($db) {
+        $this->conn = $db;
+        $this->uploads_dir = dirname(dirname(__DIR__)) . '/api/uploads/products/';
+        
+        // Ensure the uploads directory exists
+        $this->ensureUploadsDirectoryExists();
+    }
+    
+    /**
+     * Ensure the uploads directory exists and has correct permissions
+     */
+    private function ensureUploadsDirectoryExists() {
+        if (!file_exists($this->uploads_dir)) {
+            mkdir($this->uploads_dir, 0755, true);
+        }
+        
+        // Check if the directory is writable
+        if (!is_writable($this->uploads_dir)) {
+            // Try to make it writable
+            chmod($this->uploads_dir, 0755);
+        }
+    }
+    
+    /**
+     * Get product image URL
+     * @param string $image_filename Image filename
+     * @return string Image URL or placeholder URL if image doesn't exist
+     */
+    public function getProductImageUrl($image_filename) {
+        if (empty($image_filename)) {
+            return '/Terral2/api/uploads/products/placeholder.jpg';
+        }
+        
+        // Check if the image has a full path already
+        if (strpos($image_filename, '/') === 0) {
+            // It's already a full path
+            return $image_filename;
+        }
+        
+        // Check if the image exists in the uploads directory
+        $image_path = $this->uploads_dir . $image_filename;
+        
+        if (file_exists($image_path)) {
+            return '/Terral2/api/uploads/products/' . $image_filename;
+        } else {
+            // Log the missing image for debugging
+            error_log("Product image not found: " . $image_path);
+            
+            // Return the placeholder image
+            return '/Terral2/api/uploads/products/placeholder.jpg';
+        }
+    }
+    
+    /**
+     * Upload a product image
+     * @param array $file File array from $_FILES
+     * @return string|false Uploaded image filename or false on failure
+     */
+    public function uploadProductImage($file) {
+        // Check if file exists and there's no error
+        if (empty($file) || $file['error'] != UPLOAD_ERR_OK) {
+            error_log("Product image upload error: " . $file['error']);
+            return false;
+        }
+        
+        // Ensure the uploads directory exists
+        $this->ensureUploadsDirectoryExists();
+        
+        // Create unique filename
+        $image_name = 'product_' . uniqid() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+        $target_path = $this->uploads_dir . $image_name;
+        
+        // Move the uploaded file to the destination
+        if (move_uploaded_file($file['tmp_name'], $target_path)) {
+            // Log successful upload for debugging
+            error_log("Product image uploaded successfully: " . $target_path);
+            return $image_name;
+        }
+        
+        // Log failed upload for debugging
+        error_log("Failed to move uploaded product image to: " . $target_path);
+        return false;
+    }
+    
+    /**
+     * Delete a product image
+     * @param string $image_filename Image filename
+     * @return bool Success status
+     */
+    public function deleteProductImage($image_filename) {
+        if (empty($image_filename)) {
+            return false;
+        }
+        
+        $image_path = $this->uploads_dir . $image_filename;
+        
+        if (file_exists($image_path) && is_file($image_path)) {
+            return unlink($image_path);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Create a placeholder image if it doesn't exist
+     */
+    public function ensurePlaceholderExists() {
+        $placeholder_path = $this->uploads_dir . 'placeholder.jpg';
+        
+        if (!file_exists($placeholder_path)) {
+            // First try to copy from assets directory
+            $assets_placeholder = dirname(dirname(__DIR__)) . '/assets/img/placeholder.jpg';
+            
+            if (file_exists($assets_placeholder)) {
+                copy($assets_placeholder, $placeholder_path);
+            } else {
+                // Create a simple placeholder image
+                $image = imagecreate(500, 500);
+                $background = imagecolorallocate($image, 240, 240, 240);
+                $text_color = imagecolorallocate($image, 100, 100, 100);
+                
+                // Fill background
+                imagefill($image, 0, 0, $background);
+                
+                // Add text
+                $text = "No Image";
+                $font_size = 5;
+                
+                // Center text approximately
+                $x = 200;
+                $y = 240;
+                
+                // Draw text
+                imagestring($image, $font_size, $x, $y, $text, $text_color);
+                
+                // Save image
+                imagejpeg($image, $placeholder_path);
+                imagedestroy($image);
+            }
+        }
+    }
+}
+?> 

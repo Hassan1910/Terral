@@ -1,0 +1,1079 @@
+{
+	"info": {
+		"_postman_id": "9d2f0bac-3b0a-4eeb-9f8a-61f64c0b2fc4",
+		"name": "Terral Online Production System API",
+		"description": "A collection of API endpoints for the Terral Online Production System, an eCommerce platform for customized printed products.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@terral.com\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/auth/login",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate a user and get JWT token"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/auth/verify",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"auth",
+								"verify"
+							]
+						},
+						"description": "Verify JWT token validity"
+					},
+					"response": []
+				},
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"password123\",\n    \"phone\": \"+254712345678\",\n    \"address\": \"123 Main St\",\n    \"city\": \"Meru\",\n    \"state\": \"Meru\",\n    \"postal_code\": \"00100\",\n    \"country\": \"Kenya\"\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/users/register",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users",
+								"register"
+							]
+						},
+						"description": "Register a new user"
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/users/reset-password",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users",
+								"reset-password"
+							]
+						},
+						"description": "Reset user password"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication related endpoints"
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/users?limit=10&offset=0&search=",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "search",
+									"value": ""
+								}
+							]
+						},
+						"description": "Get all users (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/users/1",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users",
+								"1"
+							]
+						},
+						"description": "Get single user details"
+					},
+					"response": []
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"customer\",\n    \"phone\": \"+254712345679\",\n    \"address\": \"456 Other St\",\n    \"city\": \"Meru\",\n    \"state\": \"Meru\",\n    \"postal_code\": \"80100\",\n    \"country\": \"Kenya\"\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/users",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Create a new user (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"+254712345680\",\n    \"address\": \"789 New St\",\n    \"city\": \"Meru\"\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/users/2",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users",
+								"2"
+							]
+						},
+						"description": "Update user details"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/users/2",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users",
+								"2"
+							]
+						},
+						"description": "Delete a user (admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "User management endpoints"
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/products?limit=10&offset=0&search=&category=&price_min=&price_max=&sort=name&order=asc",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"products"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "category",
+									"value": ""
+								},
+								{
+									"key": "price_min",
+									"value": ""
+								},
+								{
+									"key": "price_max",
+									"value": ""
+								},
+								{
+									"key": "sort",
+									"value": "name"
+								},
+								{
+									"key": "order",
+									"value": "asc"
+								}
+							]
+						},
+						"description": "Get list of products with filters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/products/1",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"products",
+								"1"
+							]
+						},
+						"description": "Get single product details"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Custom Hoodie\",\n    \"description\": \"High-quality cotton hoodie that can be customized with your design.\",\n    \"price\": 39.99,\n    \"stock\": 50,\n    \"is_customizable\": true,\n    \"status\": \"active\",\n    \"category_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/products",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"products"
+							]
+						},
+						"description": "Create a new product (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"price\": 45.99,\n    \"stock\": 30,\n    \"description\": \"Updated description with more details.\"\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/products/11",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"products",
+								"11"
+							]
+						},
+						"description": "Update product details (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/products/11",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"products",
+								"11"
+							]
+						},
+						"description": "Delete a product (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Product Image",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{api_url}}/products/1/upload",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"products",
+								"1",
+								"upload"
+							]
+						},
+						"description": "Upload product image (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Customize Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "text",
+									"value": "Custom text to be printed",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{api_url}}/products/1/customize",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"products",
+								"1",
+								"customize"
+							]
+						},
+						"description": "Customize product with image or text"
+					},
+					"response": []
+				}
+			],
+			"description": "Product management endpoints"
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Get All Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/orders?limit=10&offset=0&status=&sort=created_at&order=desc",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"orders"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "status",
+									"value": ""
+								},
+								{
+									"key": "sort",
+									"value": "created_at"
+								},
+								{
+									"key": "order",
+									"value": "desc"
+								}
+							]
+						},
+						"description": "Get all orders (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/orders/1",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"orders",
+								"1"
+							]
+						},
+						"description": "Get order details"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"items\": [\n        {\n            \"product_id\": 1,\n            \"quantity\": 2,\n            \"customization_text\": \"Custom text for product 1\"\n        },\n        {\n            \"product_id\": 2,\n            \"quantity\": 1\n        }\n    ],\n    \"shipping_address\": \"123 Main St\",\n    \"shipping_city\": \"Meru\",\n    \"shipping_state\": \"Meru\",\n    \"shipping_postal_code\": \"00100\",\n    \"shipping_country\": \"Kenya\",\n    \"shipping_phone\": \"+254712345678\",\n    \"notes\": \"Please deliver in the morning\"\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/orders",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"orders"
+							]
+						},
+						"description": "Create a new order"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"processing\"\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/orders/1/status",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"orders",
+								"1",
+								"status"
+							]
+						},
+						"description": "Update order status (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Order",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/orders/1/cancel",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"orders",
+								"1",
+								"cancel"
+							]
+						},
+						"description": "Cancel an order"
+					},
+					"response": []
+				}
+			],
+			"description": "Order management endpoints"
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "Get Payment Methods",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/payments/methods",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"payments",
+								"methods"
+							]
+						},
+						"description": "Get available payment methods"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payment",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/payments/1",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"payments",
+								"1"
+							]
+						},
+						"description": "Get payment details"
+					},
+					"response": []
+				},
+				{
+					"name": "Initiate M-Pesa Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"order_id\": 1,\n    \"phone\": \"254712345678\",\n    \"amount\": 85.98\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/payments/mpesa-init",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"payments",
+								"mpesa-init"
+							]
+						},
+						"description": "Initiate M-Pesa payment"
+					},
+					"response": []
+				},
+				{
+					"name": "Generate Invoice",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/payments/1/invoice",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"payments",
+								"1",
+								"invoice"
+							]
+						},
+						"description": "Generate invoice for an order"
+					},
+					"response": []
+				}
+			],
+			"description": "Payment related endpoints"
+		},
+		{
+			"name": "Inventory",
+			"item": [
+				{
+					"name": "Get Low Stock Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/inventory/low-stock?limit=10&offset=0",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"inventory",
+								"low-stock"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Get products with low stock (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product Stock",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantity\": 50\n}"
+						},
+						"url": {
+							"raw": "{{api_url}}/inventory/1",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"inventory",
+								"1"
+							]
+						},
+						"description": "Update product stock (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Import Products",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "csv_file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{api_url}}/inventory/bulk-import",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"inventory",
+								"bulk-import"
+							]
+						},
+						"description": "Bulk import products from CSV (admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Inventory management endpoints"
+		},
+		{
+			"name": "Reports",
+			"item": [
+				{
+					"name": "Get Dashboard Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/reports/dashboard",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"reports",
+								"dashboard"
+							]
+						},
+						"description": "Get dashboard statistics (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Sales Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/reports/sales?period=month",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"reports",
+								"sales"
+							],
+							"query": [
+								{
+									"key": "period",
+									"value": "month"
+								}
+							]
+						},
+						"description": "Get sales report (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Top Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/reports/products?limit=10&period=month",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"reports",
+								"products"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "period",
+									"value": "month"
+								}
+							]
+						},
+						"description": "Get top selling products (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer Insights",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/reports/customers?limit=10",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"reports",
+								"customers"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get customer insights (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Revenue by Category",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/reports/categories?period=month",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"reports",
+								"categories"
+							],
+							"query": [
+								{
+									"key": "period",
+									"value": "month"
+								}
+							]
+						},
+						"description": "Get revenue by category (admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Reporting and analytics endpoints"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "api_url",
+			"value": "http://localhost/Terral2/api",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "YOUR_JWT_TOKEN",
+			"type": "string"
+		}
+	]
+} 

@@ -1,0 +1,41 @@
+# Allow access to images and documents
+<FilesMatch "\.(?i:jpg|jpeg|png|gif|webp|pdf|doc|docx|xls|xlsx|txt)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Deny access to scripts and potentially harmful files
+<FilesMatch "\.(?i:php|php5|phtml|phps|cgi|pl|py|jsp|asp|aspx|exe|dll|bat|cmd|sh|htaccess|htpasswd)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Disable script execution in uploads directory
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+
+# No directory listing
+Options -Indexes
+
+# Follow symlinks but don't allow directory traversal
+Options +FollowSymLinks
+Options -MultiViews
+
+# Set default handler for files
+<IfModule mod_mime.c>
+    AddHandler default-handler .php .php5 .phtml .phps .cgi .pl .py .jsp .asp .aspx .exe .dll .bat .cmd .sh
+</IfModule>
+
+# Prevent viewing of .htaccess file
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Disable parsing of .htaccess in subdirectories
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} ^/.*\.htaccess$ [NC]
+    RewriteRule .* - [F,L]
+</IfModule> 

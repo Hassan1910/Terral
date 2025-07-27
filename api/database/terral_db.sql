@@ -105,6 +105,8 @@ CREATE TABLE IF NOT EXISTS order_items (
   product_name VARCHAR(255) NOT NULL,
   quantity INT NOT NULL,
   price DECIMAL(10, 2) NOT NULL,
+  customization_color VARCHAR(50) NULL,
+  customization_size VARCHAR(50) NULL,
   customization_image VARCHAR(255) NULL,
   customization_text TEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -171,4 +173,4 @@ INSERT INTO product_categories (product_id, category_id) VALUES
 (8, 3), -- Photo Book in Books
 (9, 6), -- Calendar in Stationery
 (10, 1), -- Tote Bag in Apparel
-(10, 2); -- Tote Bag in Accessories 
+(10, 2); -- Tote Bag in Accessories

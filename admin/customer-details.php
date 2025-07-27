@@ -145,7 +145,7 @@ if (!function_exists('getStatusBadgeClass')) {
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Admin Styles -->
-    <link href="/Terral2/assets/css/admin.css" rel="stylesheet">
+    <link href="/Terral/assets/css/admin.css" rel="stylesheet">
     <style>
         :root {
             --primary: #3498db;

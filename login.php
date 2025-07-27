@@ -27,6 +27,13 @@ if (isset($_SESSION['registration_success'])) {
     unset($_SESSION['registration_success']);
 }
 
+// Check for password reset success message in session
+if (isset($_SESSION['password_reset_success'])) {
+    $success_message = $_SESSION['password_reset_success'];
+    // Clear the message from session after displaying it
+    unset($_SESSION['password_reset_success']);
+}
+
 // Process login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get form data

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Primary placeholder path (relative path works with the base tag)
     const placeholderPath = 'api/uploads/products/placeholder.jpg';
     // Fallback placeholder with full path
-    const fallbackPlaceholderPath = baseUrl + '/Terral2/api/uploads/products/placeholder.jpg';
+    const fallbackPlaceholderPath = baseUrl + '/Terral/api/uploads/products/placeholder.jpg';
     // Third fallback in assets folder
     const thirdFallbackPath = 'assets/images/placeholder.jpg'; 
     

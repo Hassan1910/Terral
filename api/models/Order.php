@@ -382,8 +382,20 @@ class Order {
         return false;
     }
     
-    // Update order status
+    // Update order status with payment validation
     public function updateStatus() {
+        // Load payment validation helper
+        require_once ROOT_PATH . '/api/helpers/PaymentValidationHelper.php';
+        $validator = new PaymentValidationHelper($this->conn);
+        
+        // Validate if status can be updated
+        $validation = $validator->canUpdateOrderStatus($this->id, $this->status);
+        
+        if (!$validation['allowed']) {
+            printf("Payment Validation Error: %s.\n", $validation['message']);
+            return false;
+        }
+        
         // Update query
         $query = "UPDATE " . $this->table_name . " 
                   SET 
@@ -404,6 +416,12 @@ class Order {
         
         // Execute query
         if($stmt->execute()) {
+            // Log successful status update
+            $validator->logValidationEvent('order_status_updated', [
+                'order_id' => $this->id,
+                'new_status' => $this->status,
+                'validation_passed' => true
+            ]);
             return true;
         }
         

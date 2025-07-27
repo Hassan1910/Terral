@@ -84,7 +84,7 @@ try {
         }
         
         // Get order items
-        $itemsSql = "SELECT oi.*, p.name, p.image 
+        $itemsSql = "SELECT oi.*, p.name, p.image, oi.customization_image, oi.customization_text
                     FROM order_items oi
                     LEFT JOIN products p ON oi.product_id = p.id
                     WHERE oi.order_id = :order_id";
@@ -98,9 +98,13 @@ try {
             
             // Add image URLs to order items
             foreach ($orderItems as &$item) {
-                $item['image_url'] = !empty($item['image']) 
-                    ? '/Terral2/api/uploads/products/' . $item['image'] 
-                    : '/Terral2/api/uploads/products/placeholder.jpg';
+                if (!empty($item['customization_image'])) {
+                    $item['image_url'] = '../uploads/customizations/' . $item['customization_image'];
+                } else {
+                    $item['image_url'] = !empty($item['image']) 
+                        ? '../uploads/products/' . $item['image'] 
+                        : '../uploads/products/placeholder.jpg';
+                }
             }
             
             $order['items'] = $orderItems;
@@ -120,4 +124,4 @@ try {
 // Return response as JSON
 header('Content-Type: application/json');
 echo json_encode($response);
-exit; 
+exit;

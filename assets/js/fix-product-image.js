@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const baseUrl = window.location.protocol + '//' + window.location.host;
     // Primary placeholder - relative path
     const placeholderPath = 'api/uploads/products/placeholder.jpg';
-    // Fallback - full URL with Terral2
-    const fallbackPlaceholderPath = baseUrl + '/Terral2/api/uploads/products/placeholder.jpg';
+    // Fallback - full URL with Terral
+    const fallbackPlaceholderPath = baseUrl + '/Terral/api/uploads/products/placeholder.jpg';
     // Third fallback in assets
     const thirdFallbackPath = 'assets/images/placeholder.jpg';
     

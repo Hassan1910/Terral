@@ -206,9 +206,27 @@ $currentPaymentStatus = isset($order['payment_status']) ? $order['payment_status
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Modern Theme CSS -->
-    <link rel="stylesheet" href="/Terral2/assets/css/modern-theme.css">
+    <link rel="stylesheet" href="/Terral/assets/css/modern-theme.css">
     
     <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receipt-area, #receipt-area * {
+                visibility: visible;
+            }
+            #receipt-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+
         /* Order confirmation specific styles */
         .order-container {
             margin-bottom: var(--space-5);
@@ -492,7 +510,7 @@ $currentPaymentStatus = isset($order['payment_status']) ? $order['payment_status
 </head>
 <body>
     <!-- Promo Banner -->
-    <div class="promo-banner">
+    <div class="promo-banner no-print">
         <div class="container">
             <div class="promo-content">
                 <span class="promo-text"><i class="fas fa-gift"></i> Special Offer: Use code <strong>TERRAL20</strong> for 20% off your first order!</span>
@@ -506,7 +524,7 @@ $currentPaymentStatus = isset($order['payment_status']) ? $order['payment_status
     </div>
     
     <!-- Navigation -->
-    <header class="navbar">
+    <header class="navbar no-print">
         <div class="container">
             <a href="index.php" class="navbar-brand">
                 <i class="fas fa-paint-brush"></i> <?php echo htmlspecialchars($site_name); ?>
@@ -561,7 +579,7 @@ $currentPaymentStatus = isset($order['payment_status']) ? $order['payment_status
                     <p>A confirmation email has been sent to <?php echo htmlspecialchars($order['email']); ?></p>
                 </div>
                 
-                <div class="order-details">
+                <div class="order-details" id="receipt-area">
                     <div class="order-header">
                         <h2>Order Details</h2>
                     </div>
@@ -713,14 +731,15 @@ $currentPaymentStatus = isset($order['payment_status']) ? $order['payment_status
                             </div>
                         </div>
                         
-                        <div class="action-buttons">
+                        <div class="action-buttons no-print">
                             <a href="index.php" class="action-button">
                                 <i class="fas fa-home"></i> Continue Shopping
                             </a>
                             
-                            <a href="#" class="action-button" onclick="window.print(); return false;">
+                            <a href="#" class="action-button" onclick="printReceipt(); return false;">
                                 <i class="fas fa-print"></i> Print Order
                             </a>
+
                             
                             <?php if (isset($_SESSION['user_id'])): ?>
                             <a href="account.php?tab=orders" class="action-button">
@@ -743,7 +762,7 @@ $currentPaymentStatus = isset($order['payment_status']) ? $order['payment_status
     </main>
     
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer no-print">
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-column">
@@ -804,7 +823,22 @@ $currentPaymentStatus = isset($order['payment_status']) ? $order['payment_status
     
     <!-- Scripts -->
     <script>
+        function printReceipt() {
+            window.print();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Clear the cart from localStorage after successful order
+            localStorage.removeItem('cart');
+            
+            // Update cart count display if the element exists
+            const cartCountElement = document.querySelector('.cart-count');
+            if (cartCountElement) {
+                cartCountElement.textContent = '0';
+            }
+            
+            // Clear session cart as well (already done server-side, but ensure consistency)
+            // This ensures the cart is completely cleared after order completion
             // Promo Banner Countdown
             function startCountdown() {
                 // Set the date we're counting down to (24 hours from now)
@@ -870,4 +904,4 @@ $currentPaymentStatus = isset($order['payment_status']) ? $order['payment_status
         });
     </script>
 </body>
-</html> 
+</html>

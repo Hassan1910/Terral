@@ -12,7 +12,7 @@ class ImageUploader {
             inputSelector: '.image-upload-input',
             previewSelector: '.image-preview',
             formSelector: 'form',
-            uploadUrl: '/Terral2/admin/image-upload-handler.php',
+            uploadUrl: '/Terral/admin/image-upload-handler.php',
             maxFileSize: 5 * 1024 * 1024, // 5MB
             allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
             uploadType: 'products', // Default upload type

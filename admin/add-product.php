@@ -23,7 +23,7 @@ session_start();
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header('Location: /Terral2/login.php');
+    header('Location: /Terral/login.php');
     exit;
 }
 
@@ -205,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     
     <!-- Admin Image Upload JS -->
-    <script src="/Terral2/assets/js/admin-image-upload.js"></script>
+    <script src="/Terral/assets/js/admin-image-upload.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {

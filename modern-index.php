@@ -104,7 +104,7 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Modern Theme CSS -->
-    <link rel="stylesheet" href="/Terral2/assets/css/modern-theme.css">
+    <link rel="stylesheet" href="/Terral/assets/css/modern-theme.css">
     
     <!-- Structured Data for SEO -->
     <script type="application/ld+json">
@@ -847,6 +847,6 @@ try {
     </script>
     
     <!-- Product Image Fix Script -->
-    <script src="/Terral2/assets/js/fix-product-image.js"></script>
+    <script src="/Terral/assets/js/fix-product-image.js"></script>
 </body>
 </html> 

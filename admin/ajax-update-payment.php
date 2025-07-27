@@ -1,6 +1,6 @@
 <?php
 /**
- * AJAX Payment Status Update Handler
+ * Enhanced AJAX Payment Status Update Handler with Validation
  */
 
 // Set error reporting
@@ -13,6 +13,7 @@ define('ROOT_PATH', dirname(__DIR__));
 
 // Include necessary files
 require_once ROOT_PATH . '/api/config/Database.php';
+require_once ROOT_PATH . '/api/helpers/PaymentValidationHelper.php';
 
 // Start session for user authentication
 session_start();
@@ -61,7 +62,33 @@ if (!in_array($newPaymentStatus, $validPaymentStatuses)) {
 $database = new Database();
 $conn = $database->getConnection();
 
+// Initialize payment validation helper
+$validator = new PaymentValidationHelper($conn);
+
 try {
+    // Get current order status for validation
+    $orderQuery = "SELECT payment_method, status FROM orders WHERE id = :order_id";
+    $stmt = $conn->prepare($orderQuery);
+    $stmt->bindParam(':order_id', $orderId);
+    $stmt->execute();
+    
+    if ($stmt->rowCount() == 0) {
+        $response['error'] = 'Order not found';
+        echo json_encode($response);
+        exit;
+    }
+    
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Log payment status change attempt
+    $validator->logValidationEvent('payment_status_update_attempt', [
+        'order_id' => $orderId,
+        'old_status' => 'checking',
+        'new_status' => $newPaymentStatus,
+        'admin_id' => $_SESSION['user_id'],
+        'payment_method' => $order['payment_method']
+    ]);
+
     // Generate transaction ID if needed
     if ($newPaymentStatus === 'paid' && empty($transactionId)) {
         $transactionId = 'MAN' . date('YmdHis') . rand(100, 999);
@@ -147,8 +174,23 @@ try {
     
     if ($result1 && $result2) {
         $conn->commit();
+        
+        // Log successful payment update
+        $validator->logValidationEvent('payment_status_updated', [
+            'order_id' => $orderId,
+            'new_payment_status' => $newPaymentStatus,
+            'transaction_id' => $transactionId,
+            'admin_id' => $_SESSION['user_id'],
+            'amount' => $itemsTotal
+        ]);
+        
         $response['success'] = true;
         $response['message'] = 'Payment status updated successfully';
+        
+        // Add payment validation summary to response
+        $paymentSummary = $validator->getOrderPaymentSummary($orderId);
+        $response['payment_summary'] = $paymentSummary;
+        
     } else {
         $conn->rollBack();
         $response['error'] = 'Failed to update payment status';
@@ -163,4 +205,4 @@ try {
 // Return response as JSON
 header('Content-Type: application/json');
 echo json_encode($response);
-exit; 
+exit;

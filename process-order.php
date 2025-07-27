@@ -7,6 +7,7 @@ require_once ROOT_PATH . '/api/config/Database.php';
 require_once ROOT_PATH . '/api/models/User.php';
 require_once ROOT_PATH . '/api/models/Order.php';
 require_once ROOT_PATH . '/api/models/OrderItem.php';
+require_once ROOT_PATH . '/api/helpers/PaymentValidationHelper.php';
 
 // Start session for user authentication
 session_start();
@@ -81,15 +82,28 @@ try {
     $order_number = 'TRL-' . strtoupper(substr(uniqid(), -8));
     
     // Create order
-    $order_status = ($payment_method === 'cash_on_delivery') ? 'pending' : 'processing';
+    // PAYMENT VALIDATION: All orders start as pending until payment is confirmed
+    // This ensures customers must pay first before goods are delivered
+    $order_status = 'pending'; // All orders start as pending until payment is confirmed
+    $payment_status = 'pending'; // Payment status starts as pending
+    
+    // Log order creation attempt for audit
+    $validator = new PaymentValidationHelper($conn);
+    $validator->logValidationEvent('order_creation_attempt', [
+        'user_id' => $_SESSION['user_id'],
+        'payment_method' => $payment_method,
+        'total_amount' => $total,
+        'order_status' => $order_status,
+        'payment_status' => $payment_status
+    ]);
     
     // Insert order into database
     $query = "INSERT INTO orders 
               (user_id, order_number, first_name, last_name, email, phone, shipping_address, 
-               payment_method, subtotal, shipping_cost, tax, total_amount, status, created_at) 
+               payment_method, payment_status, subtotal, shipping_cost, tax, total_amount, status, created_at) 
               VALUES 
               (:user_id, :order_number, :first_name, :last_name, :email, :phone, :shipping_address, 
-               :payment_method, :subtotal, :shipping_cost, :tax, :total_amount, :status, NOW())";
+               :payment_method, :payment_status, :subtotal, :shipping_cost, :tax, :total_amount, :status, NOW())";
     
     $stmt = $conn->prepare($query);
     
@@ -101,6 +115,7 @@ try {
     $stmt->bindParam(':phone', $phone);
     $stmt->bindParam(':shipping_address', $shipping_address);
     $stmt->bindParam(':payment_method', $payment_method);
+    $stmt->bindParam(':payment_status', $payment_status);
     $stmt->bindParam(':subtotal', $subtotal);
     $stmt->bindParam(':shipping_cost', $shipping);
     $stmt->bindParam(':tax', $tax);
@@ -118,19 +133,41 @@ try {
     // Insert order items
     foreach ($cart_data as $item) {
         $orderItem->order_id = $order_id;
-        $orderItem->product_id = $item['id'];
+        $orderItem->product_id = $item['product_id'] ?? $item['id'];
         $orderItem->product_name = $item['name'];
         $orderItem->price = $item['price'];
         $orderItem->quantity = $item['quantity'];
         
         // Handle customization data
         if (isset($item['customization'])) {
+            if (isset($item['customization']['color'])) {
+                $orderItem->customization_color = $item['customization']['color'];
+            }
+            
+            if (isset($item['customization']['size'])) {
+                $orderItem->customization_size = $item['customization']['size'];
+            }
+            
             if (isset($item['customization']['text'])) {
                 $orderItem->customization_text = $item['customization']['text'];
             }
             
-            if (isset($item['customization']['image'])) {
-                $orderItem->customization_image = $item['customization']['image'];
+            if (isset($item['customization']['image']) && !empty($item['customization']['image'])) {
+                // Handle image upload
+                $imageData = $item['customization']['image'];
+                list($type, $imageData) = explode(';', $imageData);
+                list(, $imageData)      = explode(',', $imageData);
+                $imageData = base64_decode($imageData);
+                
+                $imageName = 'custom_' . uniqid() . '.png';
+                $uploadPath = ROOT_PATH . '/uploads/customizations/' . $imageName;
+                
+                if (file_put_contents($uploadPath, $imageData)) {
+                    $orderItem->customization_image = $imageName;
+                } else {
+                    // Handle error - maybe log it or set a default image
+                    $orderItem->customization_image = null;
+                }
             }
         }
         
@@ -177,10 +214,11 @@ try {
         'status' => $order_status
     ];
     
-    // Clear the cart (will be done in JavaScript)
+    // Clear the cart from session
+    unset($_SESSION['cart']);
     
-    // Redirect to confirmation page
-    header('Location: order-confirmation.php');
+    // Redirect to confirmation page with order ID
+    header('Location: order-confirmation.php?order_id=' . $order_id);
     exit;
     
 } catch (Exception $e) {
@@ -195,4 +233,4 @@ try {
     $_SESSION['checkout_error'] = $error_message;
     header('Location: checkout.php');
     exit;
-} 
+}

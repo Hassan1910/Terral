@@ -17,11 +17,11 @@ class ImageUploadHelper {
     
     // Default upload directories
     private $uploadDirs = [
-        'products' => '/api/uploads/products/',
-        'categories' => '/api/uploads/categories/',
-        'customizations' => '/api/uploads/customizations/',
-        'logos' => '/api/uploads/logos/',
-        'avatars' => '/api/uploads/avatars/'
+        'products' => '/uploads/products/',
+        'categories' => '/uploads/categories/',
+        'customizations' => '/uploads/customizations/',
+        'logos' => '/uploads/logos/',
+        'avatars' => '/uploads/avatars/'
     ];
     
     // Max file size in bytes (5MB)
@@ -71,9 +71,15 @@ class ImageUploadHelper {
         }
         
         // Create upload directory if it doesn't exist
-        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/Terral2' . $this->uploadDirs[$type];
+        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/terral' . $this->uploadDirs[$type];
         if (!file_exists($uploadPath)) {
             mkdir($uploadPath, 0777, true);
+        }
+        
+        // Also create the secondary upload path for consistency
+        $secondaryUploadPath = $_SERVER['DOCUMENT_ROOT'] . '/terral/api' . $this->uploadDirs[$type];
+        if (!file_exists($secondaryUploadPath)) {
+            mkdir($secondaryUploadPath, 0777, true);
         }
         
         // Generate filename
@@ -81,9 +87,13 @@ class ImageUploadHelper {
         $filename = $customName ?? uniqid('img_') . '_' . time();
         $filename = $this->sanitizeFilename($filename) . '.' . $extension;
         $targetFile = $uploadPath . $filename;
+        $secondaryTargetFile = $secondaryUploadPath . $filename;
         
         // Move uploaded file
         if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+            // Also copy to secondary location for admin dashboard compatibility
+            copy($targetFile, $secondaryTargetFile);
+            
             return [
                 'success' => true,
                 'message' => 'File uploaded successfully',
@@ -158,7 +168,7 @@ class ImageUploadHelper {
             ];
         }
         
-        $filepath = $_SERVER['DOCUMENT_ROOT'] . '/Terral2' . $this->uploadDirs[$type] . $filename;
+        $filepath = $_SERVER['DOCUMENT_ROOT'] . '/terral' . $this->uploadDirs[$type] . $filename;
         
         if (file_exists($filepath)) {
             if (unlink($filepath)) {
@@ -250,4 +260,4 @@ class ImageUploadHelper {
         return $filename;
     }
 }
-?> 
+?>

@@ -103,8 +103,8 @@ try {
             $base_url .= $_SERVER['HTTP_HOST'];
             
             $product['image_url'] = !empty($product['image']) 
-                ? $base_url . '/Terral2/api/uploads/products/' . $product['image'] 
-                : $base_url . '/Terral2/api/uploads/products/placeholder.jpg';
+                ? $base_url . '/Terral/api/uploads/products/' . $product['image'] 
+                : $base_url . '/Terral/api/uploads/products/placeholder.jpg';
             // Add debug console log to see the actual image URL
             echo "<!-- Debug: Product ID " . $product['id'] . " image path: " . $product['image_url'] . " -->\n";
         }
@@ -127,7 +127,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <base href="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://'; ?><?php echo $_SERVER['HTTP_HOST']; ?>/Terral2/">
+    <base href="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://'; ?><?php echo $_SERVER['HTTP_HOST']; ?>/Terral/">
     <title>All Products - Terral Online Production System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -964,8 +964,5 @@ try {
             }, 3000);
         }
     </script>
-    <?php include 'includes/product-image-fix.php'; ?>
-    <?php include 'includes/fix-product-image.php'; ?>
-    <script src="debug-product-images.js"></script>
 </body>
-</html> 
+</html>

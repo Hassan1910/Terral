@@ -110,11 +110,17 @@ if (isset($_GET['demo'])) {
 } else {
     // Real cart from session
     foreach ($cart as &$item) {
+        // Extract the actual product ID (remove custom suffix if present)
+        $actual_product_id = $item['product_id'] ?? $item['id'];
+        if (strpos($actual_product_id, '_custom_') !== false) {
+            $actual_product_id = explode('_custom_', $actual_product_id)[0];
+        }
+        
         // Validate product exists and get current price
         try {
             $query = "SELECT id, name, price, image FROM products WHERE id = :id";
             $stmt = $conn->prepare($query);
-            $stmt->bindParam(':id', $item['id']);
+            $stmt->bindParam(':id', $actual_product_id);
             $stmt->execute();
             
             if ($stmt->rowCount() > 0) {
@@ -125,6 +131,9 @@ if (isset($_GET['demo'])) {
                 $item['price'] = $product['price'];
                 $item['image'] = $product['image'];
                 $item['image_url'] = $productHelper->getProductImageUrl($product['image']);
+                
+                // Store the actual product ID for later use
+                $item['product_id'] = $actual_product_id;
             }
         } catch (PDOException $e) {
             $errorMessage = 'Error loading product: ' . $e->getMessage();
@@ -246,14 +255,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
             
             // Add order items
             foreach ($cart as $item) {
-                $query = "INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
-                          VALUES (:order_id, :product_id, :product_name, :quantity, :price)";
+                // Handle customization data
+                $customization_text = null;
+                $customization_image = null;
+                $customization_color = null;
+                $customization_size = null;
+                
+                if (isset($item['customization'])) {
+                    $customization_text = isset($item['customization']['text']) ? $item['customization']['text'] : null;
+                    $customization_color = isset($item['customization']['color']) ? $item['customization']['color'] : null;
+                    $customization_size = isset($item['customization']['size']) ? $item['customization']['size'] : null;
+                    
+                    // Handle customization image upload
+                    if (isset($item['customization']['image']) && !empty($item['customization']['image'])) {
+                        $imageData = $item['customization']['image'];
+                        
+                        // Check if it's base64 encoded image data
+                        if (strpos($imageData, 'data:image') === 0) {
+                            // Extract image data from base64
+                            list($type, $imageData) = explode(';', $imageData);
+                            list(, $imageData) = explode(',', $imageData);
+                            $imageData = base64_decode($imageData);
+                            
+                            // Generate unique filename
+                            $imageName = 'custom_' . uniqid() . '_' . time() . '.png';
+                            $uploadDir = ROOT_PATH . '/uploads/customizations/';
+                            
+                            // Create directory if it doesn't exist
+                            if (!is_dir($uploadDir)) {
+                                mkdir($uploadDir, 0755, true);
+                            }
+                            
+                            $uploadPath = $uploadDir . $imageName;
+                            
+                            // Save the image file
+                            if (file_put_contents($uploadPath, $imageData)) {
+                                $customization_image = $imageName;
+                            }
+                        } else {
+                            // If it's already a filename, use it directly
+                            $customization_image = $imageData;
+                        }
+                    }
+                }
+                
+                // Extract the actual product ID from the cart item ID (remove custom suffix if present)
+                $actual_product_id = $item['product_id'] ?? $item['id'];
+                if (strpos($actual_product_id, '_custom_') !== false) {
+                    $actual_product_id = explode('_custom_', $actual_product_id)[0];
+                }
+                
+                $query = "INSERT INTO order_items (order_id, product_id, product_name, quantity, price, customization_color, customization_size, customization_text, customization_image)
+                          VALUES (:order_id, :product_id, :product_name, :quantity, :price, :customization_color, :customization_size, :customization_text, :customization_image)";
                 $stmt = $conn->prepare($query);
                 $stmt->bindParam(':order_id', $orderId);
-                $stmt->bindParam(':product_id', $item['id']);
+                $stmt->bindParam(':product_id', $actual_product_id);
                 $stmt->bindParam(':product_name', $item['name']);
                 $stmt->bindParam(':quantity', $item['quantity']);
                 $stmt->bindParam(':price', $item['price']);
+                $stmt->bindParam(':customization_color', $customization_color);
+                $stmt->bindParam(':customization_size', $customization_size);
+                $stmt->bindParam(':customization_text', $customization_text);
+                $stmt->bindParam(':customization_image', $customization_image);
                 $stmt->execute();
                 
                 // Update product stock (if not demo)
@@ -261,7 +324,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
                     $query = "UPDATE products SET stock = stock - :quantity WHERE id = :id";
                     $stmt = $conn->prepare($query);
                     $stmt->bindParam(':quantity', $item['quantity']);
-                    $stmt->bindParam(':id', $item['id']);
+                    $stmt->bindParam(':id', $actual_product_id);
                     $stmt->execute();
                 }
             }
@@ -351,7 +414,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Modern Theme CSS -->
-    <link rel="stylesheet" href="/Terral2/assets/css/modern-theme.css">
+    <link rel="stylesheet" href="/Terral/assets/css/modern-theme.css">
     
     <style>
         /* Checkout specific styles */
@@ -1053,4 +1116,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
         });
     </script>
 </body>
-</html> 
+</html>

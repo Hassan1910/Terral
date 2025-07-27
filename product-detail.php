@@ -50,8 +50,8 @@ try {
         $base_url .= $_SERVER['HTTP_HOST'];
         
         $product['image_url'] = !empty($product['image']) 
-            ? $base_url . '/Terral2/api/uploads/products/' . $product['image'] 
-            : $base_url . '/Terral2/api/uploads/products/placeholder.jpg';
+            ? $base_url . '/Terral/api/uploads/products/' . $product['image'] 
+            : $base_url . '/Terral/api/uploads/products/placeholder.jpg';
         
         // Get related products (products in the same category)
         if (!empty($product['category_id'])) {
@@ -73,8 +73,8 @@ try {
             // Add image URLs to related products
             foreach ($related_products as &$related_product) {
                 $related_product['image_url'] = !empty($related_product['image']) 
-                    ? $base_url . '/Terral2/api/uploads/products/' . $related_product['image'] 
-                    : $base_url . '/Terral2/api/uploads/products/placeholder.jpg';
+                    ? $base_url . '/Terral/api/uploads/products/' . $related_product['image'] 
+                    : $base_url . '/Terral/api/uploads/products/placeholder.jpg';
             }
         }
     } else {
@@ -90,7 +90,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <base href="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://'; ?><?php echo $_SERVER['HTTP_HOST']; ?>/Terral2/">
+    <base href="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://'; ?><?php echo $_SERVER['HTTP_HOST']; ?>/Terral/">
     <title><?php echo $product ? $product['name'] : 'Product Not Found'; ?> - Terral Online Production System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1193,7 +1193,7 @@ try {
             if (addCustomizedToCartBtn) {
                 addCustomizedToCartBtn.addEventListener('click', function() {
                     const customText = document.getElementById('custom-text').value;
-                    const customImage = document.getElementById('image-preview').src;
+                    const imagePreview = document.getElementById('image-preview');
                     const customColor = document.getElementById('custom-color').value;
                     const customSize = document.getElementById('custom-size').value;
                     const productId = document.getElementById('add-to-cart-btn').dataset.id;
@@ -1202,20 +1202,28 @@ try {
                     const productImage = document.getElementById('add-to-cart-btn').dataset.image;
                     const quantity = parseInt(document.getElementById('quantity').value);
                     
+                    // Get custom image data (base64) if an image was uploaded
+                    let customImage = null;
+                    if (imagePreview && imagePreview.src && imagePreview.style.display !== 'none' && !imagePreview.src.includes('placeholder')) {
+                        customImage = imagePreview.src;
+                    }
+                    
                     // Create a description of the customizations
                     let customDesc = ` (${customSize}, ${customColor}`;
                     if (customText) customDesc += `, Text: "${customText}"`;
+                    if (customImage) customDesc += `, Custom Image`;
                     customDesc += ')';
                     
                     addToCart({
                         id: productId + '_custom_' + Date.now(),
+                        product_id: productId,
                         name: productName + customDesc,
                         price: productPrice,
                         image: productImage,
                         quantity: quantity,
                         customization: {
                             text: customText,
-                            image: customImage !== '' ? customImage : null,
+                            image: customImage,
                             color: customColor,
                             size: customSize
                         }
@@ -1435,4 +1443,4 @@ try {
     </script>
 <?php include 'includes/fix-product-image.php'; ?>
 </body>
-</html> 
+</html>

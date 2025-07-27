@@ -15,8 +15,7 @@ require_once ROOT_PATH . '/api/config/Database.php';
 require_once ROOT_PATH . '/api/models/Product.php';
 require_once ROOT_PATH . '/api/models/Category.php';
 
-// Create database connection
-$database = new Database();
+// Create database connection                                <img src="<?php echo '../uploads/products/' . $form_data['current_image']; ?>" alt="Current Product Image" class="current-image">$database = new Database();
 $db = $database->getConnection();
 
 // Initialize models
@@ -569,7 +568,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php if (!empty($form_data['current_image'])): ?>
                             <div>
                                 <p>Current image:</p>
-                                <img src="<?php echo '/Terral2/api/uploads/products/' . $form_data['current_image']; ?>" alt="Current Product Image" class="current-image">
+                                <img src="<?php echo '../uploads/products/' . $form_data['current_image']; ?>" alt="Current Product Image" class="current-image">
                                 <input type="hidden" name="current_image" value="<?php echo htmlspecialchars($form_data['current_image']); ?>">
                             </div>
                         <?php endif; ?>

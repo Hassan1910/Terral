@@ -558,10 +558,10 @@ try {
                     </div>
                     
                     <ul class="sidebar-nav">
-                        <li><a href="#" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                        <li><a href="#"><i class="fas fa-shopping-bag"></i> Orders</a></li>
-                        <li><a href="#"><i class="fas fa-heart"></i> Wishlist</a></li>
-                        <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                        <li><a href="account.php" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                        <li><a href="account.php#order-history"><i class="fas fa-shopping-bag"></i> Orders</a></li>
+                        <li><a href="all-products.php"><i class="fas fa-heart"></i> Wishlist</a></li>
+                        <li><a href="account.php?section=settings"><i class="fas fa-cog"></i> Settings</a></li>
                     </ul>
                     
                     <a href="logout.php" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -613,7 +613,7 @@ try {
                     </div>
                     
                     <!-- Order History -->
-                    <div class="order-history">
+                    <div class="order-history" id="order-history">
                         <h2>Recent Orders</h2>
                         
                         <?php if (empty($orders)): ?>
@@ -684,4 +684,4 @@ try {
         }
     </script>
 </body>
-</html> 
+</html>

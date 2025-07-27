@@ -12,6 +12,8 @@ class OrderItem {
     public $price;
     public $quantity;
     public $subtotal;
+    public $customization_color;
+    public $customization_size;
     public $customization_image;
     public $customization_text;
     public $created_at;
@@ -29,14 +31,16 @@ class OrderItem {
         $this->product_name = htmlspecialchars(strip_tags($this->product_name));
         $this->price = htmlspecialchars(strip_tags($this->price));
         $this->quantity = htmlspecialchars(strip_tags($this->quantity));
+        $this->customization_color = $this->customization_color ? htmlspecialchars(strip_tags($this->customization_color)) : null;
+        $this->customization_size = $this->customization_size ? htmlspecialchars(strip_tags($this->customization_size)) : null;
         $this->customization_text = $this->customization_text ? htmlspecialchars(strip_tags($this->customization_text)) : null;
         $this->customization_image = $this->customization_image ? htmlspecialchars(strip_tags($this->customization_image)) : null;
         
         // Create query
         $query = "INSERT INTO " . $this->table_name . "
-                  (order_id, product_id, product_name, quantity, price, customization_image, customization_text, created_at)
+                  (order_id, product_id, product_name, quantity, price, customization_color, customization_size, customization_image, customization_text, created_at)
                   VALUES
-                  (:order_id, :product_id, :product_name, :quantity, :price, :customization_image, :customization_text, NOW())";
+                  (:order_id, :product_id, :product_name, :quantity, :price, :customization_color, :customization_size, :customization_image, :customization_text, NOW())";
         
         // Prepare statement
         $stmt = $this->conn->prepare($query);
@@ -47,6 +51,8 @@ class OrderItem {
         $stmt->bindParam(':product_name', $this->product_name);
         $stmt->bindParam(':quantity', $this->quantity);
         $stmt->bindParam(':price', $this->price);
+        $stmt->bindParam(':customization_color', $this->customization_color);
+        $stmt->bindParam(':customization_size', $this->customization_size);
         $stmt->bindParam(':customization_image', $this->customization_image);
         $stmt->bindParam(':customization_text', $this->customization_text);
         
@@ -61,7 +67,7 @@ class OrderItem {
     // Read order items by order ID
     public function readByOrderId($order_id) {
         // Create query
-        $query = "SELECT oi.*, p.name as product_name 
+        $query = "SELECT oi.id, oi.order_id, oi.product_id, p.name as product_name, oi.price, oi.quantity, oi.customization_color, oi.customization_size, oi.customization_image, oi.customization_text
                   FROM " . $this->table_name . " oi
                   LEFT JOIN products p ON oi.product_id = p.id
                   WHERE oi.order_id = ? 
@@ -109,6 +115,8 @@ class OrderItem {
             $this->price = $row['price'];
             $this->quantity = $row['quantity'];
             $this->subtotal = $row['price'] * $row['quantity'];
+            $this->customization_color = $row['customization_color'] ?? null;
+            $this->customization_size = $row['customization_size'] ?? null;
             $this->customization_image = $row['customization_image'];
             $this->customization_text = $row['customization_text'];
             
@@ -126,6 +134,8 @@ class OrderItem {
         $this->product_id = htmlspecialchars(strip_tags($this->product_id));
         $this->price = htmlspecialchars(strip_tags($this->price));
         $this->quantity = htmlspecialchars(strip_tags($this->quantity));
+        $this->customization_color = $this->customization_color ? htmlspecialchars(strip_tags($this->customization_color)) : null;
+        $this->customization_size = $this->customization_size ? htmlspecialchars(strip_tags($this->customization_size)) : null;
         $this->customization_text = $this->customization_text ? htmlspecialchars(strip_tags($this->customization_text)) : null;
         $this->customization_image = $this->customization_image ? htmlspecialchars(strip_tags($this->customization_image)) : null;
         
@@ -135,6 +145,8 @@ class OrderItem {
                       product_id = :product_id,
                       price = :price,
                       quantity = :quantity,
+                      customization_color = :customization_color,
+                      customization_size = :customization_size,
                       customization_image = :customization_image,
                       customization_text = :customization_text
                   WHERE id = :id";
@@ -148,6 +160,8 @@ class OrderItem {
         $stmt->bindParam(':product_id', $this->product_id);
         $stmt->bindParam(':price', $this->price);
         $stmt->bindParam(':quantity', $this->quantity);
+        $stmt->bindParam(':customization_color', $this->customization_color);
+        $stmt->bindParam(':customization_size', $this->customization_size);
         $stmt->bindParam(':customization_image', $this->customization_image);
         $stmt->bindParam(':customization_text', $this->customization_text);
         
@@ -215,6 +229,14 @@ class OrderItem {
         }
         
         // Set properties from customization data
+        if (isset($customization['color'])) {
+            $this->customization_color = $customization['color'];
+        }
+        
+        if (isset($customization['size'])) {
+            $this->customization_size = $customization['size'];
+        }
+        
         if (isset($customization['text'])) {
             $this->customization_text = $customization['text'];
         }
@@ -230,6 +252,14 @@ class OrderItem {
     public function getCustomizationAsJson() {
         $customization = array();
         
+        if (!empty($this->customization_color)) {
+            $customization['color'] = $this->customization_color;
+        }
+        
+        if (!empty($this->customization_size)) {
+            $customization['size'] = $this->customization_size;
+        }
+        
         if (!empty($this->customization_text)) {
             $customization['text'] = $this->customization_text;
         }
@@ -241,4 +271,4 @@ class OrderItem {
         return !empty($customization) ? json_encode($customization) : null;
     }
 }
-?> 
+?>

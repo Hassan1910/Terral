@@ -23,6 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart_data'])) {
         // Store cart data in session
         $_SESSION['cart'] = $cartData;
         
+        // Regenerate session ID to prevent session fixation
+        session_regenerate_id(true);
+        
+        // Save the session data before redirecting
+        session_write_close();
+        
         // Redirect to checkout page
         header('Location: checkout.php');
         exit;

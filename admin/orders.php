@@ -1,211 +1,116 @@
 <?php
-/**
- * Admin Orders Page
- * 
- * This page allows administrators to view and manage all orders.
- */
-
-// Set error reporting
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// Define root path
-define('ROOT_PATH', dirname(__DIR__));
-
-// Include necessary files
-require_once ROOT_PATH . '/api/config/Database.php';
-
-// Start session for user authentication
+// Start session
 session_start();
 
-// Check if user is logged in and is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    // Set a session variable to indicate where to redirect after login
-    $_SESSION['redirect_after_login'] = '/Terral2/admin/orders.php';
-    
-    // Debug session information
-    error_log('User not authenticated. Session: ' . print_r($_SESSION, true));
-    
-    header('Location: /Terral2/login.php');
+// Check if user is logged in and is an admin
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    // Redirect to login page if not logged in or not an admin
+    header('Location: ../login.php');
     exit;
 }
 
-// Initialize variables
-$pageTitle = 'Manage Orders';
-$orders = [];
-$errorMessage = '';
-$successMessage = '';
-
-// Pagination variables
-$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-$perPage = 10;
-$offset = ($page - 1) * $perPage;
-$totalOrders = 0;
-
-// Filter variables
-$status = isset($_GET['status']) ? $_GET['status'] : '';
-$dateFrom = isset($_GET['date_from']) ? $_GET['date_from'] : '';
-$dateTo = isset($_GET['date_to']) ? $_GET['date_to'] : '';
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-
-// Sorting
-$sortBy = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'created_at';
-$sortOrder = isset($_GET['sort_order']) ? $_GET['sort_order'] : 'DESC';
-
-// Validate sort parameters
-$validSortColumns = ['id', 'created_at', 'total', 'status'];
-if (!in_array($sortBy, $validSortColumns)) {
-    $sortBy = 'created_at';
-}
-
-$validSortOrders = ['ASC', 'DESC'];
-if (!in_array(strtoupper($sortOrder), $validSortOrders)) {
-    $sortOrder = 'DESC';
-}
+// Include necessary files
+define('ROOT_PATH', dirname(__DIR__));
+require_once ROOT_PATH . '/api/config/Database.php';
+require_once ROOT_PATH . '/api/models/Order.php';
 
 // Create database connection
 $database = new Database();
-$conn = $database->getConnection();
+$db = $database->getConnection();
 
-try {
-    // Build base SQL query
-    $sql = "SELECT o.*, o.total_price as total, u.first_name, u.last_name, 
-            IFNULL(p.status, 'pending') as payment_status 
-            FROM orders o
-            LEFT JOIN users u ON o.user_id = u.id
-            LEFT JOIN payments p ON o.id = p.order_id
-            WHERE 1=1";
-    
-    $countSql = "SELECT COUNT(*) as total FROM orders o WHERE 1=1";
-    
-    $params = [];
-    
-    // Apply filters
-    if (!empty($status)) {
-        $sql .= " AND o.status = :status";
-        $countSql .= " AND o.status = :status";
-        $params[':status'] = $status;
-    }
-    
-    if (!empty($dateFrom)) {
-        $sql .= " AND DATE(o.created_at) >= :date_from";
-        $countSql .= " AND DATE(o.created_at) >= :date_from";
-        $params[':date_from'] = $dateFrom;
-    }
-    
-    if (!empty($dateTo)) {
-        $sql .= " AND DATE(o.created_at) <= :date_to";
-        $countSql .= " AND DATE(o.created_at) <= :date_to";
-        $params[':date_to'] = $dateTo;
-    }
-    
-    if (!empty($search)) {
-        $sql .= " AND (o.order_number LIKE :search OR u.first_name LIKE :search OR u.last_name LIKE :search)";
-        $countSql .= " AND (o.order_number LIKE :search OR o.id LIKE :search)";
-        $params[':search'] = "%$search%";
-    }
-    
-    // Apply sorting
-    if ($sortBy === 'total') {
-        $sql .= " ORDER BY o.total_price $sortOrder";
-    } else {
-        $sql .= " ORDER BY o.$sortBy $sortOrder";
-    }
-    
-    // Apply pagination
-    $sql .= " LIMIT :offset, :per_page";
-    
-    // Get total count
-    $stmt = $conn->prepare($countSql);
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value);
-    }
-    $stmt->execute();
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $totalOrders = $result['total'];
-    
-    // Get paginated results
-    $stmt = $conn->prepare($sql);
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value);
-    }
-    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-    $stmt->bindValue(':per_page', $perPage, PDO::PARAM_INT);
-    $stmt->execute();
-    
-    $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-} catch (PDOException $e) {
-    $errorMessage = 'Database error: ' . $e->getMessage();
+// Initialize models
+$order = new Order($db);
+
+// Pagination settings
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = 20;
+$offset = ($page - 1) * $limit;
+
+// Search and filter parameters
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
+$date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
+$date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
+
+// Build query conditions
+$conditions = [];
+$params = [];
+
+if (!empty($search)) {
+    $conditions[] = "(o.id LIKE :search OR CONCAT(u.first_name, ' ', u.last_name) LIKE :search OR u.email LIKE :search)";
+    $params[':search'] = '%' . $search . '%';
 }
 
-// Calculate pagination details
-$totalPages = ceil($totalOrders / $perPage);
-
-// Helper function for formatting currency
-if (!function_exists('formatCurrency')) {
-    function formatCurrency($amount) {
-        // Add null check to handle empty values
-        if ($amount === null) {
-            $amount = 0;
-        }
-        return 'KSh ' . number_format($amount, 2);
-    }
+if (!empty($status_filter)) {
+    $conditions[] = "o.status = :status";
+    $params[':status'] = $status_filter;
 }
 
-// Get status badge class helper function
-function getStatusBadgeClass($status) {
-    switch ($status) {
-        case 'pending':
-            return 'badge-warning';
-        case 'processing':
-            return 'badge-info';
-        case 'shipped':
-            return 'badge-primary';
-        case 'delivered':
-            return 'badge-success';
-        case 'canceled':
-            return 'badge-danger';
-        default:
-            return 'badge-secondary';
-    }
+if (!empty($date_from)) {
+    $conditions[] = "DATE(o.created_at) >= :date_from";
+    $params[':date_from'] = $date_from;
 }
 
-// Build query string for pagination links
-function buildQueryString($page, $exclude = []) {
-    $query = $_GET;
-    
-    // Set the page
-    $query['page'] = $page;
-    
-    // Remove excluded parameters
-    foreach ($exclude as $param) {
-        unset($query[$param]);
-    }
-    
-    return http_build_query($query);
+if (!empty($date_to)) {
+    $conditions[] = "DATE(o.created_at) <= :date_to";
+    $params[':date_to'] = $date_to;
 }
+
+$whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
+
+// Get total count for pagination
+$countQuery = "SELECT COUNT(*) as total FROM orders o LEFT JOIN users u ON o.user_id = u.id $whereClause";
+$countStmt = $db->prepare($countQuery);
+foreach ($params as $key => $value) {
+    $countStmt->bindValue($key, $value);
+}
+$countStmt->execute();
+$totalOrders = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+$totalPages = ceil($totalOrders / $limit);
+
+// Get orders with pagination
+$ordersQuery = "SELECT o.*, 
+                CONCAT(u.first_name, ' ', u.last_name) as customer_name,
+                u.email as customer_email,
+                p.payment_method,
+                p.status as payment_status
+                FROM orders o
+                LEFT JOIN users u ON o.user_id = u.id
+                LEFT JOIN payments p ON o.id = p.order_id
+                $whereClause
+                ORDER BY o.created_at DESC
+                LIMIT :limit OFFSET :offset";
+
+$ordersStmt = $db->prepare($ordersQuery);
+foreach ($params as $key => $value) {
+    $ordersStmt->bindValue($key, $value);
+}
+$ordersStmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+$ordersStmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$ordersStmt->execute();
+$orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get order statuses for filter dropdown
+$statusQuery = "SELECT DISTINCT status FROM orders WHERE status IS NOT NULL ORDER BY status";
+$statusStmt = $db->prepare($statusQuery);
+$statusStmt->execute();
+$statuses = $statusStmt->fetchAll(PDO::FETCH_COLUMN);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Orders - Terral Admin</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
+    <title>Orders Management - Terral Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #3498db;
             --primary-dark: #2980b9;
             --secondary: #e74c3c;
-            --bg-dark: #2c3e50;
-            --dark: #2c3e50;
             --text-dark: #2c3e50;
             --text-light: #7f8c8d;
             --background: #f8f9fa;
@@ -215,9 +120,8 @@ function buildQueryString($page, $exclude = []) {
             --success: #2ecc71;
             --warning: #f39c12;
             --danger: #e74c3c;
-            --info: #3498db;
-            --border-radius: 4px;
-            --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
         }
         
@@ -232,7 +136,6 @@ function buildQueryString($page, $exclude = []) {
             color: var(--text-dark);
             background-color: var(--background);
             line-height: 1.6;
-            overflow-x: hidden;
         }
         
         a {
@@ -240,38 +143,33 @@ function buildQueryString($page, $exclude = []) {
             color: inherit;
         }
         
-        .container-fluid {
-            padding: 0;
-            margin: 0;
-            width: 100%;
-            height: 100vh;
+        .container {
             display: flex;
+            min-height: 100vh;
         }
         
         /* Sidebar */
         .sidebar {
-            width: 220px;
-            background-color: var(--dark);
+            width: 250px;
+            background-color: var(--text-dark);
             color: var(--white);
+            padding: 20px 0;
             position: fixed;
             height: 100vh;
-            padding-top: 20px;
-            z-index: 1000;
+            overflow-y: auto;
         }
         
         .sidebar-logo {
-            font-size: 1.5rem;
-            font-weight: 600;
-            padding: 12px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 15px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--white);
+            padding: 20px;
             text-align: center;
+            margin-bottom: 30px;
         }
         
         .sidebar-menu {
             list-style: none;
-            padding: 0;
-            margin: 0;
         }
         
         .sidebar-menu li {
@@ -280,12 +178,16 @@ function buildQueryString($page, $exclude = []) {
         
         .sidebar-menu a {
             display: block;
-            padding: 10px 15px;
-            color: rgba(255, 255, 255, 0.8);
-            transition: all 0.3s;
+            padding: 12px 20px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
         }
         
-        .sidebar-menu a:hover, 
+        .sidebar-menu a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
         .sidebar-menu a.active {
             background-color: var(--primary);
             color: var(--white);
@@ -300,111 +202,157 @@ function buildQueryString($page, $exclude = []) {
         /* Main Content */
         .main-content {
             flex: 1;
-            margin-left: 220px;
-            padding: 15px;
-            width: calc(100% - 220px);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            margin-left: 250px;
+            padding: 30px;
         }
         
-        .main-header {
+        .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px 0 15px;
+            margin-bottom: 30px;
         }
         
         .page-title {
-            font-size: 1.5rem;
+            font-size: 2rem;
             font-weight: 600;
-            margin: 0;
         }
         
-        .user-actions {
+        .user-info {
             display: flex;
             align-items: center;
         }
         
-        .welcome-text {
+        .user-info .user-name {
             margin-right: 15px;
         }
         
-        .logout-btn {
-            background-color: var(--secondary);
-            color: white;
-            padding: 6px 12px;
+        .user-info .logout-btn {
+            background-color: var(--danger);
+            color: var(--white);
+            padding: 8px 15px;
             border-radius: var(--border-radius);
-            text-decoration: none;
-            font-size: 0.85rem;
+            transition: var(--transition);
         }
         
-        .logout-btn:hover {
+        .user-info .logout-btn:hover {
             background-color: #c0392b;
-            color: white;
-            text-decoration: none;
         }
         
         /* Filters */
         .filters {
             background-color: var(--white);
+            padding: 20px;
             border-radius: var(--border-radius);
-            padding: 12px;
-            margin-bottom: 15px;
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
         }
         
-        .filters .form-group {
-            margin-bottom: 0;
+        .filters-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
         }
         
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        /* Tables */
-        .table-card {
-            background-color: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            overflow: hidden;
-            flex: 1;
+        .form-group {
             display: flex;
             flex-direction: column;
         }
         
-        .table-responsive {
-            flex: 1;
-            overflow: auto;
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-dark);
         }
         
-        .table {
-            margin-bottom: 0;
-            width: 100%;
+        .form-control {
+            padding: 10px;
+            border: 1px solid var(--gray);
+            border-radius: var(--border-radius);
+            font-size: 14px;
         }
         
-        .table th {
-            background-color: var(--gray-light);
-            border-top: none;
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: var(--gray);
+            color: var(--text-dark);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #95a5a6;
+        }
+        
+        /* Orders Table */
+        .orders-container {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        .orders-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .orders-title {
+            font-size: 1.2rem;
             font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }
         
-        .table th, .table td {
-            vertical-align: middle;
-            padding: 0.5rem 0.75rem;
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .orders-table th,
+        .orders-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .orders-table th {
+            background-color: var(--gray-light);
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .orders-table tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
         }
         
         /* Status badges */
         .status {
-            padding: 4px 8px;
-            border-radius: 50px;
-            font-size: 0.75rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
             font-weight: 500;
-            display: inline-block;
+            text-transform: capitalize;
         }
         
         .status-pending {
@@ -423,142 +371,224 @@ function buildQueryString($page, $exclude = []) {
         }
         
         .status-delivered {
-            background-color: #4ADE80;
-            color: white;
+            background-color: var(--success);
+            color: var(--white);
         }
         
-        .status-canceled {
-            background-color: #F87171;
-            color: white;
+        .status-cancelled {
+            background-color: var(--danger);
+            color: var(--white);
         }
         
-        /* Buttons */
-        .btn-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            border-color: var(--primary-dark);
+        /* Action buttons */
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            font-size: 0.9rem;
+            margin-right: 5px;
         }
         
         .btn-view {
             background-color: var(--primary);
-            color: white;
-            padding: 4px 10px;
-            border-radius: var(--border-radius);
-            font-size: 0.85rem;
+            color: var(--white);
         }
         
         .btn-view:hover {
             background-color: var(--primary-dark);
-            color: white;
-            text-decoration: none;
+        }
+        
+        .btn-edit {
+            background-color: var(--warning);
+            color: var(--white);
+        }
+        
+        .btn-edit:hover {
+            background-color: #e67e22;
         }
         
         /* Pagination */
-        .pagination-container {
-            padding: 10px;
-            background-color: var(--white);
-            border-top: 1px solid var(--gray-light);
-        }
-        
         .pagination {
-            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            gap: 10px;
         }
         
-        .page-link {
-            color: var(--primary);
+        .pagination a,
+        .pagination span {
+            padding: 8px 12px;
+            border: 1px solid var(--gray);
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: var(--transition);
         }
         
-        .page-item.active .page-link {
+        .pagination a:hover {
             background-color: var(--primary);
+            color: var(--white);
             border-color: var(--primary);
+        }
+        
+        .pagination .current {
+            background-color: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+        
+        .pagination .disabled {
+            color: var(--gray);
+            cursor: not-allowed;
+        }
+        
+        .pagination .disabled:hover {
+            background-color: transparent;
+            color: var(--gray);
+            border-color: var(--gray);
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-light);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--gray);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .filters-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .orders-table {
+                font-size: 0.9rem;
+            }
+            
+            .orders-table th,
+            .orders-table td {
+                padding: 10px 8px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
+    <div class="container">
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-logo">
-                <i class="fas fa-paint-brush"></i> Terral
+                TERRAL ADMIN
             </div>
             <ul class="sidebar-menu">
-                <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="products.php"><i class="fas fa-box"></i> Products</a></li>
-                <li><a href="categories.php"><i class="fas fa-tags"></i> Categories</a></li>
-                <li><a href="orders.php" class="active"><i class="fas fa-shopping-cart"></i> Orders</a></li>
-                <li><a href="customers.php"><i class="fas fa-users"></i> Customers</a></li>
-                <li><a href="reports.php"><i class="fas fa-chart-bar"></i> Reports</a></li>
-                <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+                <li>
+                    <a href="dashboard.php">
+                        <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="products.php">
+                        <i class="fas fa-box"></i> <span>Products</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="orders.php" class="active">
+                        <i class="fas fa-shopping-cart"></i> <span>Orders</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="customers.php">
+                        <i class="fas fa-users"></i> <span>Customers</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="categories.php">
+                        <i class="fas fa-tags"></i> <span>Categories</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="reports.php">
+                        <i class="fas fa-chart-bar"></i> <span>Reports</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="settings.php">
+                        <i class="fas fa-cog"></i> <span>Settings</span>
+                    </a>
+                </li>
             </ul>
         </div>
         
         <!-- Main Content -->
         <div class="main-content">
-            <div class="main-header">
-                <h1 class="page-title">Manage Orders</h1>
-                <div class="user-actions">
-                    <span class="welcome-text">Welcome, <?php echo isset($_SESSION['first_name']) ? $_SESSION['first_name'] : 'Admin'; ?></span>
-                    <a href="../logout.php" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <div class="page-header">
+                <h1 class="page-title">Orders Management</h1>
+                <div class="user-info">
+                    <span class="user-name">Welcome, <?php echo htmlspecialchars($_SESSION['first_name'] ?? 'Admin'); ?></span>
+                    <a href="../logout.php" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
                 </div>
             </div>
             
-            <?php if (!empty($errorMessage)): ?>
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle"></i> <?php echo $errorMessage; ?>
-                </div>
-            <?php endif; ?>
-            
-            <?php if (!empty($successMessage)): ?>
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i> <?php echo $successMessage; ?>
-                </div>
-            <?php endif; ?>
-            
             <!-- Filters -->
             <div class="filters">
-                <form action="" method="GET" class="row">
-                    <div class="col-md-2">
+                <form method="GET" action="">
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="search">Search Orders</label>
+                            <input type="text" id="search" name="search" class="form-control" 
+                                   placeholder="Search by Order ID, Customer Name, or Email" 
+                                   value="<?php echo htmlspecialchars($search); ?>">
+                        </div>
+                        
                         <div class="form-group">
                             <label for="status">Status</label>
-                            <select name="status" id="status" class="form-control form-control-sm">
+                            <select id="status" name="status" class="form-control">
                                 <option value="">All Statuses</option>
-                                <option value="pending" <?php echo $status === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="processing" <?php echo $status === 'processing' ? 'selected' : ''; ?>>Processing</option>
-                                <option value="shipped" <?php echo $status === 'shipped' ? 'selected' : ''; ?>>Shipped</option>
-                                <option value="delivered" <?php echo $status === 'delivered' ? 'selected' : ''; ?>>Delivered</option>
-                                <option value="canceled" <?php echo $status === 'canceled' ? 'selected' : ''; ?>>Canceled</option>
+                                <?php foreach ($statuses as $status): ?>
+                                    <option value="<?php echo htmlspecialchars($status); ?>"
+                                            <?php echo $status_filter === $status ? 'selected' : ''; ?>>
+                                        <?php echo ucfirst($status); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
-                    </div>
-                    <div class="col-md-2">
+                        
                         <div class="form-group">
-                            <label for="date_from">Date From</label>
-                            <input type="date" name="date_from" id="date_from" class="form-control form-control-sm" value="<?php echo $dateFrom; ?>">
+                            <label for="date_from">From Date</label>
+                            <input type="date" id="date_from" name="date_from" class="form-control" 
+                                   value="<?php echo htmlspecialchars($date_from); ?>">
                         </div>
-                    </div>
-                    <div class="col-md-2">
+                        
                         <div class="form-group">
-                            <label for="date_to">Date To</label>
-                            <input type="date" name="date_to" id="date_to" class="form-control form-control-sm" value="<?php echo $dateTo; ?>">
+                            <label for="date_to">To Date</label>
+                            <input type="date" id="date_to" name="date_to" class="form-control" 
+                                   value="<?php echo htmlspecialchars($date_to); ?>">
                         </div>
-                    </div>
-                    <div class="col-md-4">
+                        
                         <div class="form-group">
-                            <label for="search">Search</label>
-                            <input type="text" name="search" id="search" class="form-control form-control-sm" placeholder="Order #, Customer Name" value="<?php echo htmlspecialchars($search); ?>">
-                        </div>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <div class="filter-buttons">
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                <i class="fas fa-filter"></i> Filter
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Filter
                             </button>
-                            <a href="orders.php" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-sync"></i> Reset
+                            <a href="orders.php" class="btn btn-secondary" style="margin-top: 5px;">
+                                <i class="fas fa-times"></i> Clear
                             </a>
                         </div>
                     </div>
@@ -566,116 +596,109 @@ function buildQueryString($page, $exclude = []) {
             </div>
             
             <!-- Orders Table -->
-            <div class="table-card">
-                <div class="table-responsive">
-                    <?php if (count($orders) > 0): ?>
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Order #</th>
-                                    <th>Customer</th>
-                                    <th>Date</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th>Payment Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($orders as $order): ?>
-                                    <tr>
-                                        <td>#<?php echo $order['id']; ?></td>
-                                        <td>
-                                            <?php echo htmlspecialchars($order['first_name'] . ' ' . $order['last_name']); ?>
-                                        </td>
-                                        <td><?php echo date('M d, Y', strtotime($order['created_at'])); ?></td>
-                                        <td><?php echo formatCurrency($order['total']); ?></td>
-                                        <td>
-                                            <span class="status status-<?php echo $order['status']; ?>">
-                                                <?php echo ucfirst($order['status']); ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge <?php echo $order['payment_status'] === 'paid' ? 'badge-success' : 'badge-warning'; ?>">
-                                                <?php echo ucfirst($order['payment_status']); ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <a href="order-details.php?id=<?php echo $order['id']; ?>" class="btn-view">
-                                                <i class="fas fa-eye"></i> View
-                                            </a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    <?php else: ?>
-                        <div class="alert alert-info m-3">
-                            <i class="fas fa-info-circle"></i> No orders found. Try adjusting your filters.
-                        </div>
-                    <?php endif; ?>
+            <div class="orders-container">
+                <div class="orders-header">
+                    <h2 class="orders-title">Orders (<?php echo number_format($totalOrders); ?> total)</h2>
                 </div>
                 
-                <!-- Pagination -->
-                <?php if ($totalPages > 1): ?>
-                    <div class="pagination-container">
-                        <div class="d-flex justify-content-center">
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination">
-                                    <?php if ($page > 1): ?>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?<?php echo buildQueryString($page - 1); ?>" aria-label="Previous">
-                                                <span aria-hidden="true">&laquo;</span>
-                                            </a>
-                                        </li>
-                                    <?php endif; ?>
-                                    
-                                    <?php
-                                    // Determine the range of pages to show
-                                    $startPage = max(1, $page - 2);
-                                    $endPage = min($totalPages, $page + 2);
-                                    
-                                    // Always show first page
-                                    if ($startPage > 1) {
-                                        echo '<li class="page-item"><a class="page-link" href="?' . buildQueryString(1) . '">1</a></li>';
-                                        if ($startPage > 2) {
-                                            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-                                        }
-                                    }
-                                    
-                                    // Show page numbers
-                                    for ($i = $startPage; $i <= $endPage; $i++) {
-                                        echo '<li class="page-item ' . ($page == $i ? 'active' : '') . '"><a class="page-link" href="?' . buildQueryString($i) . '">' . $i . '</a></li>';
-                                    }
-                                    
-                                    // Always show last page
-                                    if ($endPage < $totalPages) {
-                                        if ($endPage < $totalPages - 1) {
-                                            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-                                        }
-                                        echo '<li class="page-item"><a class="page-link" href="?' . buildQueryString($totalPages) . '">' . $totalPages . '</a></li>';
-                                    }
-                                    ?>
-                                    
-                                    <?php if ($page < $totalPages): ?>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?<?php echo buildQueryString($page + 1); ?>" aria-label="Next">
-                                                <span aria-hidden="true">&raquo;</span>
-                                            </a>
-                                        </li>
-                                    <?php endif; ?>
-                                </ul>
-                            </nav>
-                        </div>
+                <?php if (empty($orders)): ?>
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-cart"></i>
+                        <h3>No Orders Found</h3>
+                        <p>No orders match your current filters.</p>
                     </div>
+                <?php else: ?>
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Total Amount</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($orders as $order): ?>
+                                <tr>
+                                    <td>#<?php echo $order['id']; ?></td>
+                                    <td>
+                                        <div>
+                                            <strong><?php echo htmlspecialchars($order['customer_name'] ?? 'N/A'); ?></strong><br>
+                                            <small><?php echo htmlspecialchars($order['customer_email'] ?? ''); ?></small>
+                                        </div>
+                                    </td>
+                                    <td><?php echo date('M d, Y H:i', strtotime($order['created_at'])); ?></td>
+                                    <td>KSh <?php echo number_format($order['total_price'], 2); ?></td>
+                                    <td>
+                                        <span class="status status-<?php echo strtolower($order['status']); ?>">
+                                            <?php echo ucfirst($order['status']); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php if ($order['payment_status']): ?>
+                                            <span class="status status-<?php echo strtolower($order['payment_status']); ?>">
+                                                <?php echo ucfirst($order['payment_status']); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="status status-pending">Pending</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <a href="order-details.php?id=<?php echo $order['id']; ?>" 
+                                           class="action-btn btn-view">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination -->
+                    <?php if ($totalPages > 1): ?>
+                        <div class="pagination">
+                            <?php if ($page > 1): ?>
+                                <a href="?page=<?php echo $page - 1; ?>&<?php echo http_build_query(array_filter($_GET, function($key) { return $key !== 'page'; }, ARRAY_FILTER_USE_KEY)); ?>">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </a>
+                            <?php else: ?>
+                                <span class="disabled">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </span>
+                            <?php endif; ?>
+                            
+                            <?php
+                            $start = max(1, $page - 2);
+                            $end = min($totalPages, $page + 2);
+                            
+                            for ($i = $start; $i <= $end; $i++):
+                            ?>
+                                <?php if ($i == $page): ?>
+                                    <span class="current"><?php echo $i; ?></span>
+                                <?php else: ?>
+                                    <a href="?page=<?php echo $i; ?>&<?php echo http_build_query(array_filter($_GET, function($key) { return $key !== 'page'; }, ARRAY_FILTER_USE_KEY)); ?>">
+                                        <?php echo $i; ?>
+                                    </a>
+                                <?php endif; ?>
+                            <?php endfor; ?>
+                            
+                            <?php if ($page < $totalPages): ?>
+                                <a href="?page=<?php echo $page + 1; ?>&<?php echo http_build_query(array_filter($_GET, function($key) { return $key !== 'page'; }, ARRAY_FILTER_USE_KEY)); ?>">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="disabled">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
     </div>
-
-    <!-- Bootstrap and jQuery Scripts -->
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
-</html> 
+</html>

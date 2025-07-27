@@ -614,7 +614,7 @@ if (isset($_POST['delete_product']) && isset($_POST['product_id'])) {
                             <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
                                 <tr>
                                     <td>
-                                        <img src="<?php echo !empty($row['image']) ? '../uploads/products/' . $row['image'] : '../assets/img/product-placeholder.jpg'; ?>" alt="<?php echo htmlspecialchars($row['name']); ?>" class="product-image">
+                                        <img src="<?php echo !empty($row['image']) ? '/Terral/uploads/products/' . $row['image'] : '/Terral/assets/images/placeholder.jpg'; ?>" alt="<?php echo htmlspecialchars($row['name']); ?>" class="product-image">
                                     </td>
                                     <td><?php echo htmlspecialchars($row['name']); ?></td>
                                     <td><?php echo htmlspecialchars($row['category_name']); ?></td>

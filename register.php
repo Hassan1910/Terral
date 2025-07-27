@@ -42,10 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate form data
     if (empty($form_data['first_name'])) {
         $errors['first_name'] = 'First name is required';
+    } elseif (!preg_match('/^[a-zA-Z\s\'.-]+$/', $form_data['first_name'])) {
+        $errors['first_name'] = 'First name can only contain letters, spaces, apostrophes, and hyphens';
     }
     
     if (empty($form_data['last_name'])) {
         $errors['last_name'] = 'Last name is required';
+    } elseif (!preg_match('/^[a-zA-Z\s\'.-]+$/', $form_data['last_name'])) {
+        $errors['last_name'] = 'Last name can only contain letters, spaces, apostrophes, and hyphens';
     }
     
     if (empty($form_data['email'])) {
@@ -56,6 +60,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($form_data['phone'])) {
         $errors['phone'] = 'Phone number is required';
+    } elseif (!preg_match('/^[\d\s\-\+\(\)\.]+$/', $form_data['phone'])) {
+        $errors['phone'] = 'Phone number can only contain numbers, spaces, hyphens, parentheses, and plus sign';
+    } elseif (strlen(preg_replace('/[^\d]/', '', $form_data['phone'])) < 10) {
+        $errors['phone'] = 'Phone number must contain at least 10 digits';
     }
     
     if (empty($form_data['password'])) {
@@ -74,10 +82,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($form_data['city'])) {
         $errors['city'] = 'City is required';
+    } elseif (!preg_match('/^[a-zA-Z\s\'.-]+$/', $form_data['city'])) {
+        $errors['city'] = 'City name can only contain letters, spaces, apostrophes, and hyphens';
     }
     
     if (empty($form_data['postal_code'])) {
         $errors['postal_code'] = 'Postal code is required';
+    } elseif (!preg_match('/^[a-zA-Z0-9\s\-]+$/', $form_data['postal_code'])) {
+        $errors['postal_code'] = 'Postal code can only contain letters, numbers, spaces, and hyphens';
     }
     
     if (empty($form_data['country'])) {
@@ -326,6 +338,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
         
+        .form-control:invalid {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1);
+        }
+        
+        .form-control:invalid:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+        }
+        
+        .form-control:valid {
+            border-color: var(--success);
+        }
+        
+        .form-control:valid:focus {
+            border-color: var(--success);
+            box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.2);
+        }
+        
+        .validation-error {
+            color: var(--secondary) !important;
+            font-size: 0.9rem !important;
+            margin-top: 5px !important;
+            font-weight: 500 !important;
+            display: block !important;
+        }
+        
+        .form-group.has-error .form-control {
+            border-color: var(--secondary) !important;
+            box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1) !important;
+        }
+        
+        .form-group.has-success .form-control {
+            border-color: var(--success) !important;
+        }
+        
         .error-message {
             color: var(--secondary);
             font-size: 0.9rem;
@@ -471,7 +519,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-row">
                         <div class="form-group">
                             <label for="first_name" class="form-label">First Name *</label>
-                            <input type="text" id="first_name" name="first_name" class="form-control" value="<?php echo htmlspecialchars($form_data['first_name']); ?>" required>
+                            <input type="text" id="first_name" name="first_name" class="form-control" 
+                                   pattern="[a-zA-Z\s'.-]+" 
+                                   title="First name can only contain letters, spaces, apostrophes, and hyphens"
+                                   value="<?php echo htmlspecialchars($form_data['first_name']); ?>" required>
                             <?php if (isset($errors['first_name'])): ?>
                                 <span class="error-message"><?php echo $errors['first_name']; ?></span>
                             <?php endif; ?>
@@ -479,7 +530,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="form-group">
                             <label for="last_name" class="form-label">Last Name *</label>
-                            <input type="text" id="last_name" name="last_name" class="form-control" value="<?php echo htmlspecialchars($form_data['last_name']); ?>" required>
+                            <input type="text" id="last_name" name="last_name" class="form-control" 
+                                   pattern="[a-zA-Z\s'.-]+" 
+                                   title="Last name can only contain letters, spaces, apostrophes, and hyphens"
+                                   value="<?php echo htmlspecialchars($form_data['last_name']); ?>" required>
                             <?php if (isset($errors['last_name'])): ?>
                                 <span class="error-message"><?php echo $errors['last_name']; ?></span>
                             <?php endif; ?>
@@ -497,7 +551,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="form-group">
                             <label for="phone" class="form-label">Phone Number *</label>
-                            <input type="tel" id="phone" name="phone" class="form-control" value="<?php echo htmlspecialchars($form_data['phone']); ?>" required>
+                            <input type="tel" id="phone" name="phone" class="form-control" 
+                                   pattern="[\d\s\-\+\(\)\.]+" 
+                                   title="Phone number can only contain numbers, spaces, hyphens, parentheses, and plus sign"
+                                   value="<?php echo htmlspecialchars($form_data['phone']); ?>" required>
                             <?php if (isset($errors['phone'])): ?>
                                 <span class="error-message"><?php echo $errors['phone']; ?></span>
                             <?php endif; ?>
@@ -537,7 +594,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-row">
                         <div class="form-group">
                             <label for="city" class="form-label">City *</label>
-                            <input type="text" id="city" name="city" class="form-control" value="<?php echo htmlspecialchars($form_data['city']); ?>" required>
+                            <input type="text" id="city" name="city" class="form-control" 
+                                   pattern="[a-zA-Z\s'.-]+" 
+                                   title="City name can only contain letters, spaces, apostrophes, and hyphens"
+                                   value="<?php echo htmlspecialchars($form_data['city']); ?>" required>
                             <?php if (isset($errors['city'])): ?>
                                 <span class="error-message"><?php echo $errors['city']; ?></span>
                             <?php endif; ?>
@@ -545,7 +605,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="form-group">
                             <label for="postal_code" class="form-label">Postal Code *</label>
-                            <input type="text" id="postal_code" name="postal_code" class="form-control" value="<?php echo htmlspecialchars($form_data['postal_code']); ?>" required>
+                            <input type="text" id="postal_code" name="postal_code" class="form-control" 
+                                   pattern="[a-zA-Z0-9\s\-]+" 
+                                   title="Postal code can only contain letters, numbers, spaces, and hyphens"
+                                   value="<?php echo htmlspecialchars($form_data['postal_code']); ?>" required>
                             <?php if (isset($errors['postal_code'])): ?>
                                 <span class="error-message"><?php echo $errors['postal_code']; ?></span>
                             <?php endif; ?>
@@ -600,26 +663,291 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.addEventListener('DOMContentLoaded', function() {
             updateCartCount();
             
-            // Form validation
+            // Get form elements
             const form = document.querySelector('form');
+            const firstName = document.getElementById('first_name');
+            const lastName = document.getElementById('last_name');
+            const phone = document.getElementById('phone');
+            const city = document.getElementById('city');
+            const postalCode = document.getElementById('postal_code');
             const password = document.getElementById('password');
             const confirmPassword = document.getElementById('confirm_password');
             
+            // Validation patterns
+            const namePattern = /^[a-zA-Z\s'.-]+$/;
+            const phonePattern = /^[\d\s\-\+\(\)\.]+$/;
+            const postalPattern = /^[a-zA-Z0-9\s\-]+$/;
+            
+            // Function to show error message
+            function showFieldError(field, message) {
+                const formGroup = field.closest('.form-group');
+                
+                // Remove existing error message
+                const existingError = formGroup.querySelector('.validation-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Remove existing classes
+                formGroup.classList.remove('has-error', 'has-success');
+                
+                // Add new error message
+                if (message) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'validation-error';
+                    errorDiv.textContent = message;
+                    formGroup.appendChild(errorDiv);
+                    formGroup.classList.add('has-error');
+                } else if (field.value !== '') {
+                    formGroup.classList.add('has-success');
+                }
+            }
+            
+            // Function to validate name fields
+            function validateNameField(field, message) {
+                if (field.value === '') {
+                    field.setCustomValidity('This field is required');
+                    showFieldError(field, 'This field is required');
+                } else if (!namePattern.test(field.value)) {
+                    field.setCustomValidity(message);
+                    showFieldError(field, message);
+                } else {
+                    field.setCustomValidity('');
+                    showFieldError(field, '');
+                }
+            }
+            
+            // Function to validate phone field
+            function validatePhoneField(field) {
+                if (field.value === '') {
+                    field.setCustomValidity('Phone number is required');
+                    showFieldError(field, 'Phone number is required');
+                } else if (!phonePattern.test(field.value)) {
+                    field.setCustomValidity('Phone number can only contain numbers, spaces, hyphens, parentheses, and plus sign');
+                    showFieldError(field, 'Phone number can only contain numbers, spaces, hyphens, parentheses, and plus sign');
+                } else if (field.value.replace(/[^\d]/g, '').length < 10) {
+                    field.setCustomValidity('Phone number must contain at least 10 digits');
+                    showFieldError(field, 'Phone number must contain at least 10 digits');
+                } else {
+                    field.setCustomValidity('');
+                    showFieldError(field, '');
+                }
+            }
+            
+            // Function to validate postal code
+            function validatePostalCode(field) {
+                if (field.value === '') {
+                    field.setCustomValidity('Postal code is required');
+                    showFieldError(field, 'Postal code is required');
+                } else if (!postalPattern.test(field.value)) {
+                    field.setCustomValidity('Postal code can only contain letters, numbers, spaces, and hyphens');
+                    showFieldError(field, 'Postal code can only contain letters, numbers, spaces, and hyphens');
+                } else {
+                    field.setCustomValidity('');
+                    showFieldError(field, '');
+                }
+            }
+            
+            // Real-time validation for first name
+            firstName.addEventListener('input', function() {
+                validateNameField(this, 'First name can only contain letters, spaces, apostrophes, and hyphens');
+            });
+            
+            firstName.addEventListener('blur', function() {
+                validateNameField(this, 'First name can only contain letters, spaces, apostrophes, and hyphens');
+            });
+            
+            // Real-time validation for last name
+            lastName.addEventListener('input', function() {
+                validateNameField(this, 'Last name can only contain letters, spaces, apostrophes, and hyphens');
+            });
+            
+            lastName.addEventListener('blur', function() {
+                validateNameField(this, 'Last name can only contain letters, spaces, apostrophes, and hyphens');
+            });
+            
+            // Real-time validation for phone
+            phone.addEventListener('input', function() {
+                validatePhoneField(this);
+            });
+            
+            phone.addEventListener('blur', function() {
+                validatePhoneField(this);
+            });
+            
+            // Real-time validation for city
+            city.addEventListener('input', function() {
+                validateNameField(this, 'City name can only contain letters, spaces, apostrophes, and hyphens');
+            });
+            
+            city.addEventListener('blur', function() {
+                validateNameField(this, 'City name can only contain letters, spaces, apostrophes, and hyphens');
+            });
+            
+            // Real-time validation for postal code
+            postalCode.addEventListener('input', function() {
+                validatePostalCode(this);
+            });
+            
+            postalCode.addEventListener('blur', function() {
+                validatePostalCode(this);
+            });
+            
+            // Email validation
+            document.getElementById('email').addEventListener('input', validateEmail);
+            document.getElementById('email').addEventListener('blur', validateEmail);
+            
+            // Password validation
+            password.addEventListener('input', validatePassword);
+            password.addEventListener('blur', validatePassword);
+            
+            // Confirm password validation
+            confirmPassword.addEventListener('input', validateConfirmPassword);
+            confirmPassword.addEventListener('blur', validateConfirmPassword);
+            
+            // Address validation
+            document.getElementById('address').addEventListener('input', validateAddress);
+            document.getElementById('address').addEventListener('blur', validateAddress);
+            
+            // Country validation
+            document.getElementById('country').addEventListener('change', validateCountry);
+            
+            // Form validation
             form.addEventListener('submit', function(event) {
                 let isValid = true;
+                let firstInvalidField = null;
                 
-                // Simple client-side validation (in addition to server-side)
-                if (password.value !== confirmPassword.value) {
-                    confirmPassword.setCustomValidity('Passwords do not match');
-                    isValid = false;
-                } else {
-                    confirmPassword.setCustomValidity('');
-                }
+                // Validate all fields
+                const fields = [
+                    { field: firstName, validator: () => validateNameField(firstName, 'First name can only contain letters, spaces, apostrophes, and hyphens') },
+                    { field: lastName, validator: () => validateNameField(lastName, 'Last name can only contain letters, spaces, apostrophes, and hyphens') },
+                    { field: document.getElementById('email'), validator: () => validateEmail() },
+                    { field: phone, validator: () => validatePhoneField(phone) },
+                    { field: password, validator: () => validatePassword() },
+                    { field: confirmPassword, validator: () => validateConfirmPassword() },
+                    { field: document.getElementById('address'), validator: () => validateAddress() },
+                    { field: city, validator: () => validateNameField(city, 'City name can only contain letters, spaces, apostrophes, and hyphens') },
+                    { field: postalCode, validator: () => validatePostalCode(postalCode) },
+                    { field: document.getElementById('country'), validator: () => validateCountry() }
+                ];
+                
+                fields.forEach(({ field, validator }) => {
+                    validator();
+                    if (!field.checkValidity()) {
+                        isValid = false;
+                        if (!firstInvalidField) {
+                            firstInvalidField = field;
+                        }
+                    }
+                });
                 
                 if (!isValid) {
                     event.preventDefault();
+                    
+                    // Scroll to first invalid field
+                    if (firstInvalidField) {
+                        firstInvalidField.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                        firstInvalidField.focus();
+                    }
+                    
+                    // Show general error message
+                    showGeneralError('Please correct the highlighted errors below and try again.');
                 }
             });
+            
+            // Additional validation functions
+            function validateEmail() {
+                const email = document.getElementById('email');
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                
+                if (email.value === '') {
+                    email.setCustomValidity('Email is required');
+                    showFieldError(email, 'Email is required');
+                } else if (!emailPattern.test(email.value)) {
+                    email.setCustomValidity('Please enter a valid email address');
+                    showFieldError(email, 'Please enter a valid email address');
+                } else {
+                    email.setCustomValidity('');
+                    showFieldError(email, '');
+                }
+            }
+            
+            function validatePassword() {
+                if (password.value === '') {
+                    password.setCustomValidity('Password is required');
+                    showFieldError(password, 'Password is required');
+                } else if (password.value.length < 8) {
+                    password.setCustomValidity('Password must be at least 8 characters long');
+                    showFieldError(password, 'Password must be at least 8 characters long');
+                } else {
+                    password.setCustomValidity('');
+                    showFieldError(password, '');
+                }
+            }
+            
+            function validateConfirmPassword() {
+                if (confirmPassword.value === '') {
+                    confirmPassword.setCustomValidity('Please confirm your password');
+                    showFieldError(confirmPassword, 'Please confirm your password');
+                } else if (password.value !== confirmPassword.value) {
+                    confirmPassword.setCustomValidity('Passwords do not match');
+                    showFieldError(confirmPassword, 'Passwords do not match');
+                } else {
+                    confirmPassword.setCustomValidity('');
+                    showFieldError(confirmPassword, '');
+                }
+            }
+            
+            function validateAddress() {
+                const address = document.getElementById('address');
+                if (address.value === '') {
+                    address.setCustomValidity('Address is required');
+                    showFieldError(address, 'Address is required');
+                } else {
+                    address.setCustomValidity('');
+                    showFieldError(address, '');
+                }
+            }
+            
+            function validateCountry() {
+                const country = document.getElementById('country');
+                if (country.value === '') {
+                    country.setCustomValidity('Please select a country');
+                    showFieldError(country, 'Please select a country');
+                } else {
+                    country.setCustomValidity('');
+                    showFieldError(country, '');
+                }
+            }
+            
+            function showGeneralError(message) {
+                // Remove existing general error
+                const existingError = document.querySelector('.general-validation-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Add new general error
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'general-validation-error';
+                errorDiv.style.cssText = `
+                    background-color: var(--secondary);
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: var(--border-radius);
+                    margin-bottom: 20px;
+                    text-align: center;
+                    font-weight: 500;
+                `;
+                errorDiv.textContent = message;
+                
+                const formContainer = document.querySelector('.registration-form-container');
+                const formTitle = formContainer.querySelector('.form-title');
+                formTitle.insertAdjacentElement('afterend', errorDiv);
+            }
             
             // Update password validation when typing
             confirmPassword.addEventListener('input', function() {
@@ -639,4 +967,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </script>
 </body>
-</html> 
+</html>

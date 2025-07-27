@@ -124,7 +124,7 @@ if (!defined('IS_ADMIN') || !isset($pageTitle)) {
                             <?php if (isset($product['image']) && !empty($product['image'])): ?>
                                 <div class="current-image mt-3">
                                     <p class="mb-1">Current Image:</p>
-                                    <img src="<?php echo '/Terral2/api/uploads/products/' . $product['image']; ?>" alt="Current Image" class="img-thumbnail" style="max-height: 100px;">
+                                    <img src="<?php echo '../uploads/products/' . $product['image']; ?>" alt="Current Image" class="img-thumbnail" style="max-height: 100px;">
                                     <div class="custom-control custom-checkbox mt-2">
                                         <input type="checkbox" class="custom-control-input" id="delete_image" name="delete_image" value="1">
                                         <label class="custom-control-label" for="delete_image">Delete current image</label>

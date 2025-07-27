@@ -93,18 +93,18 @@ try {
     <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . $_SERVER['HTTP_HOST']; ?>">
     
     <!-- Favicon -->
-    <link rel="icon" href="/Terral2/assets/images/favicon.ico" type="image/x-icon">
-    
+    <link rel="icon" href="/Terral/assets/images/favicon.ico" type="image/x-icon">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Modern Theme CSS -->
-    <link rel="stylesheet" href="/Terral2/assets/css/modern-theme.css">
+    <link rel="stylesheet" href="/Terral/assets/css/modern-theme.css">
     
     <!-- Structured Data for SEO -->
     <script type="application/ld+json">
@@ -113,7 +113,7 @@ try {
         "@type": "Organization",
         "name": "<?php echo htmlspecialchars($site_name); ?>",
         "url": "<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . $_SERVER['HTTP_HOST']; ?>",
-        "logo": "/Terral2/assets/images/logo.png",
+        "logo": "/Terral/assets/images/logo.png",
         "contactPoint": {
             "@type": "ContactPoint",
             "telephone": "<?php echo htmlspecialchars($store_info['phone']); ?>",
@@ -357,7 +357,7 @@ try {
                         </div>
                         <div class="testimonial-author" style="display: flex; align-items: center;">
                             <div class="author-avatar" style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; margin-right: 1rem;">
-                                <img src="/Terral2/assets/images/placeholder.jpg" alt="John Smith" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="/Terral/assets/images/placeholder.jpg" alt="John Smith" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                             <div class="author-info">
                                 <h4 style="margin: 0; font-size: 1rem;">John Smith</h4>
@@ -373,7 +373,7 @@ try {
                         </div>
                         <div class="testimonial-author" style="display: flex; align-items: center;">
                             <div class="author-avatar" style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; margin-right: 1rem;">
-                                <img src="/Terral2/assets/images/placeholder.jpg" alt="Sarah Johnson" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="/Terral/assets/images/placeholder.jpg" alt="Sarah Johnson" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                             <div class="author-info">
                                 <h4 style="margin: 0; font-size: 1rem;">Sarah Johnson</h4>
@@ -389,7 +389,7 @@ try {
                         </div>
                         <div class="testimonial-author" style="display: flex; align-items: center;">
                             <div class="author-avatar" style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; margin-right: 1rem;">
-                                <img src="/Terral2/assets/images/placeholder.jpg" alt="David Mwangi" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="/Terral/assets/images/placeholder.jpg" alt="David Mwangi" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                             <div class="author-info">
                                 <h4 style="margin: 0; font-size: 1rem;">David Mwangi</h4>
@@ -698,6 +698,6 @@ try {
     </script>
     
     <!-- Product Image Fix Script -->
-    <script src="/Terral2/assets/js/fix-product-image.js"></script>
+    <script src="/Terral/assets/js/fix-product-image.js"></script>
 </body>
 </html> 
